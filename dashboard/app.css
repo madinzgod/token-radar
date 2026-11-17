@@ -1,0 +1,187 @@
+/* Token Radar — a dark, phosphor-lit board. One accent (signal green), one warning
+   colour (amber), hairline rules, tabular numerals. No webfonts, no images, no network. */
+
+:root {
+  --bg: #0a0e12;
+  --panel: #10161d;
+  --panel-raised: #151e27;
+  --line: #22303f;
+  --line-soft: #18222d;
+  --ink: #e9eff5;
+  --muted: #93a5b5;
+  --faint: #64798a;
+  --accent: #57e389;
+  --accent-dim: #2c7a4b;
+  --amber: #ffc857;
+  --red: #ff8484;
+  --mono: ui-monospace, "SF Mono", "Cascadia Mono", Menlo, Consolas, monospace;
+  --sans: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--sans);
+  font-size: 15px;
+  line-height: 1.45;
+}
+
+a { color: var(--accent); text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+/* Masthead -------------------------------------------------------------- */
+
+.masthead {
+  border-bottom: 1px solid var(--line);
+  background:
+    radial-gradient(640px 180px at 18% -40px, rgba(87, 227, 137, 0.13), transparent 70%),
+    var(--panel);
+}
+.masthead-inner { max-width: 1180px; margin: 0 auto; padding: 26px 20px 20px; }
+.wordmark {
+  font-family: var(--mono);
+  font-size: 27px;
+  font-weight: 700;
+  letter-spacing: 3px;
+  color: var(--ink);
+}
+.wordmark span { color: var(--accent); }
+.wordmark:hover { text-decoration: none; }
+.tagline { margin: 8px 0 4px; max-width: 720px; color: var(--muted); font-size: 15.5px; }
+.snapshot-line { margin: 2px 0 0; color: var(--faint); font-family: var(--mono); font-size: 12.5px; }
+
+/* Layout ---------------------------------------------------------------- */
+
+.app { max-width: 1180px; margin: 0 auto; padding: 20px; min-height: 55vh; }
+.colophon { max-width: 1180px; margin: 0 auto; padding: 6px 20px 34px; color: var(--faint); font-size: 13px; }
+.colophon em { color: var(--muted); font-style: normal; }
+
+/* Stat cards ------------------------------------------------------------ */
+
+.stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(168px, 1fr)); gap: 10px; margin-bottom: 18px; }
+.stat {
+  background: var(--panel);
+  border: 1px solid var(--line-soft);
+  border-radius: 10px;
+  padding: 12px 14px 10px;
+}
+.stat .stat-value { font-family: var(--mono); font-size: 23px; font-weight: 700; color: var(--ink); }
+.stat .stat-value em { color: var(--accent); font-style: normal; }
+.stat .stat-label { color: var(--muted); font-size: 12.5px; margin-top: 2px; }
+
+/* Signal strip ---------------------------------------------------------- */
+
+.signals { margin: 0 0 20px; }
+.signals h2, .section-title {
+  font-size: 13px; letter-spacing: 1.6px; text-transform: uppercase; color: var(--muted);
+  margin: 0 0 10px; font-weight: 700;
+}
+.signal-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; }
+.signal-card {
+  display: block; background: var(--panel); border: 1px solid var(--line-soft);
+  border-left: 3px solid var(--accent-dim); border-radius: 8px; padding: 10px 12px; color: var(--ink);
+}
+.signal-card:hover { border-left-color: var(--accent); text-decoration: none; background: var(--panel-raised); }
+.signal-card .signal-name { font-weight: 700; font-size: 14.5px; }
+.signal-card .signal-score { float: right; font-family: var(--mono); color: var(--accent); font-weight: 700; }
+.signal-card .signal-why { color: var(--muted); font-size: 12.5px; margin-top: 3px; }
+
+/* Controls -------------------------------------------------------------- */
+
+.controls {
+  display: flex; flex-wrap: wrap; gap: 8px; align-items: center;
+  background: var(--panel); border: 1px solid var(--line-soft); border-radius: 10px;
+  padding: 10px; margin-bottom: 14px;
+}
+.controls input[type="search"], .controls select {
+  background: var(--bg); color: var(--ink); border: 1px solid var(--line);
+  border-radius: 7px; padding: 7px 10px; font-size: 14px; font-family: var(--sans);
+}
+.controls input[type="search"] { flex: 1 1 190px; }
+.tabs { display: flex; gap: 4px; margin-right: auto; }
+.tab {
+  border: 1px solid var(--line); background: transparent; color: var(--muted);
+  border-radius: 999px; padding: 6px 13px; font-size: 13.5px; cursor: pointer; font-family: var(--sans);
+}
+.tab[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: #06130b; font-weight: 700; }
+.result-count { color: var(--faint); font-family: var(--mono); font-size: 12.5px; }
+
+/* Board table ----------------------------------------------------------- */
+
+.board-table { width: 100%; border-collapse: collapse; background: var(--panel); border: 1px solid var(--line-soft); border-radius: 10px; overflow: hidden; }
+.board-table th {
+  text-align: left; font-size: 11.5px; letter-spacing: 1.1px; text-transform: uppercase;
+  color: var(--faint); padding: 10px 12px; border-bottom: 1px solid var(--line); white-space: nowrap;
+}
+.board-table td { padding: 9px 12px; border-bottom: 1px solid var(--line-soft); vertical-align: middle; }
+.board-table tbody tr { cursor: pointer; }
+.board-table tbody tr:hover { background: var(--panel-raised); }
+.board-table .num { font-family: var(--mono); text-align: right; white-space: nowrap; }
+.board-table th.num { text-align: right; }
+.rank { font-family: var(--mono); color: var(--faint); }
+.proto-name { font-weight: 700; font-size: 15px; }
+.proto-cat { color: var(--muted); font-size: 12.5px; }
+.chains { color: var(--muted); font-size: 12.5px; }
+.tag {
+  display: inline-block; font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.6px;
+  color: #06130b; background: var(--amber); border-radius: 4px; padding: 1px 5px; margin-left: 7px;
+  vertical-align: 2px; font-weight: 700;
+}
+.implied { font-family: var(--mono); font-weight: 700; color: var(--accent); text-align: right; white-space: nowrap; }
+.up { color: var(--accent); }
+.down { color: var(--red); }
+.flat { color: var(--faint); }
+.signal-cell { min-width: 92px; }
+.signal-bar { height: 5px; background: var(--line); border-radius: 3px; overflow: hidden; margin-top: 4px; }
+.signal-bar i { display: block; height: 100%; background: var(--accent); }
+.empty-note { padding: 26px; text-align: center; color: var(--muted); background: var(--panel); border: 1px solid var(--line-soft); border-radius: 10px; }
+
+/* Detail view ----------------------------------------------------------- */
+
+.back-link { font-family: var(--mono); font-size: 13px; }
+.detail-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 10px; margin: 10px 0 4px; }
+.detail-head h1 { font-size: 30px; margin: 0; }
+.detail-rank { font-family: var(--mono); color: var(--accent); font-size: 17px; }
+.detail-sub { color: var(--muted); margin: 0 0 16px; }
+.detail-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 10px; margin-bottom: 18px; }
+.implied-hero {
+  background: var(--panel); border: 1px solid var(--accent-dim); border-radius: 10px;
+  padding: 13px 16px; margin-bottom: 14px;
+}
+.implied-hero .hero-value { font-family: var(--mono); font-size: 30px; font-weight: 700; color: var(--accent); }
+.implied-hero .hero-label { color: var(--muted); font-size: 13px; }
+.breakdown { background: var(--panel); border: 1px solid var(--line-soft); border-radius: 10px; padding: 14px 16px; margin-bottom: 18px; }
+.break-row { display: grid; grid-template-columns: 210px 1fr 130px; gap: 12px; align-items: center; padding: 6px 0; border-bottom: 1px dashed var(--line-soft); }
+.break-row:last-child { border-bottom: none; }
+.break-row .break-name { color: var(--muted); font-size: 13.5px; }
+.break-row .break-value { font-family: var(--mono); text-align: right; font-size: 13.5px; }
+.meter { height: 7px; background: var(--line); border-radius: 4px; overflow: hidden; }
+.meter i { display: block; height: 100%; background: var(--accent); }
+.meter.amber i { background: var(--amber); }
+.farm-plan { background: var(--panel); border: 1px solid var(--line-soft); border-radius: 10px; padding: 6px 18px 10px; margin-bottom: 18px; }
+.farm-plan ol { margin: 8px 0; padding-left: 22px; }
+.farm-plan li { padding: 7px 0; border-bottom: 1px dashed var(--line-soft); }
+.farm-plan li:last-child { border-bottom: none; }
+
+/* Method view ----------------------------------------------------------- */
+
+.method { background: var(--panel); border: 1px solid var(--line-soft); border-radius: 10px; padding: 18px 20px; }
+.method h2 { margin-top: 22px; }
+.method h2:first-child { margin-top: 0; }
+.method p, .method li { color: #c6d2dd; max-width: 78ch; }
+.method .formula {
+  font-family: var(--mono); background: var(--bg); border: 1px solid var(--line);
+  border-radius: 8px; padding: 12px 14px; font-size: 13.5px; overflow-x: auto; white-space: nowrap;
+}
+.method table { border-collapse: collapse; margin: 10px 0; }
+.method th, .method td { border: 1px solid var(--line-soft); padding: 5px 10px; font-size: 13.5px; text-align: left; }
+.method td.num { font-family: var(--mono); text-align: right; }
+
+@media (max-width: 760px) {
+  .break-row { grid-template-columns: 1fr 90px; }
+  .break-row .meter { display: none; }
+  .board-table .chains-col { display: none; }
+}
