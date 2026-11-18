@@ -352,6 +352,103 @@
       : 'Showing ' + shown + ' of ' + DATA.rows.length + ' ranked protocols. Click a row for its value breakdown and farm plan.';
   }
 
+  /* Movers and chains --------------------------------------------------------- */
+
+  function renderMovers() {
+    app.textContent = '';
+    app.appendChild(link('#/board', 'back-link', '← back to the board'));
+    app.appendChild(el('h1', 'view-title', 'Top movers — where the TVL is rushing in'));
+    app.appendChild(el('p', 'detail-sub',
+      'The ranked board’s biggest seven-day TVL gains, as of ' + DATA.as_of + '. A launch is worth more when users are ' +
+      'arriving before it happens, so the radar watches the inflow as closely as the size.'));
+
+    var gainers = DATA.rows
+      .filter(function (r) { return r.change_7d !== null && r.change_7d !== undefined; })
+      .slice()
+      .sort(function (a, b) { return b.change_7d - a.change_7d || a.rank - b.rank; })
+      .slice(0, 15);
+    var table = el('table', 'board-table');
+    var head = el('thead');
+    var hr = el('tr');
+    [['#', ''], ['Protocol', ''], ['Chains', 'chains-col'], ['TVL', 'num'], ['7d change', 'num'],
+     ['Implied value', 'num'], ['Signal', '']].forEach(function (pair) {
+      hr.appendChild(el('th', pair[1], pair[0]));
+    });
+    head.appendChild(hr);
+    table.appendChild(head);
+    var body = el('tbody');
+    gainers.forEach(function (r) {
+      var tr = el('tr');
+      tr.addEventListener('click', function () {
+        window.location.hash = '#/protocol/' + encodeURIComponent(r.slug);
+      });
+      tr.appendChild(el('td', 'rank', String(r.rank)));
+      var nameCell = el('td');
+      var nameLine = el('div');
+      nameLine.appendChild(el('span', 'proto-name', r.name));
+      if (r.on_watchlist) nameLine.appendChild(el('span', 'tag', 'WATCHLIST'));
+      nameCell.appendChild(nameLine);
+      nameCell.appendChild(el('div', 'proto-cat', r.category || 'Uncategorised'));
+      tr.appendChild(nameCell);
+      tr.appendChild(el('td', 'chains chains-col', chainLabel(r.chains)));
+      tr.appendChild(el('td', 'num', formatUsd(r.tvl_usd)));
+      tr.appendChild(el('td', 'num mover-change ' + pctClass(r.change_7d), formatPct(r.change_7d)));
+      tr.appendChild(el('td', 'implied', formatUsd(r.implied_value_usd)));
+      tr.appendChild(el('td', 'num', String(r.signal_score)));
+      body.appendChild(tr);
+    });
+    table.appendChild(body);
+    app.appendChild(table);
+    app.appendChild(el('p', 'result-count',
+      'The 15 fastest growers of the ' + DATA.rows.length + ' ranked protocols. Rows whose seven-day change is ' +
+      'unreported are counted as flat by the model and cannot appear here. Click a row for its breakdown and farm plan.'));
+
+    app.appendChild(el('h2', 'section-title chain-title', 'Chains at a glance'));
+    app.appendChild(el('p', 'detail-sub',
+      'Every chain the ranked board touches, by the protocols that run on it: how much of the board sits there, ' +
+      'what it is worth together, and the hottest protocol on it this week. A protocol on several chains counts once per chain.'));
+    var byChain = {};
+    DATA.rows.forEach(function (r) {
+      r.chains.forEach(function (c) {
+        var s = byChain[c] || (byChain[c] = { chain: c, count: 0, tvl: 0, implied: 0, best: null });
+        s.count += 1;
+        s.tvl += r.tvl_usd;
+        s.implied += r.implied_value_usd;
+        if (r.change_7d !== null && r.change_7d !== undefined && (!s.best || r.change_7d > s.best.change_7d)) s.best = r;
+      });
+    });
+    var chains = Object.keys(byChain).map(function (k) { return byChain[k]; })
+      .sort(function (a, b) { return b.implied - a.implied || b.count - a.count || (a.chain < b.chain ? -1 : 1); })
+      .slice(0, 12);
+    var ctable = el('table', 'board-table');
+    var chead = el('thead');
+    var chr = el('tr');
+    ['Chain', 'Protocols', 'Board TVL', 'Implied value together', 'Hottest this week (7d)'].forEach(function (label, i) {
+      chr.appendChild(el('th', i >= 1 && i <= 3 ? 'num' : '', label));
+    });
+    chead.appendChild(chr);
+    ctable.appendChild(chead);
+    var cbody = el('tbody');
+    chains.forEach(function (s) {
+      var tr = el('tr');
+      tr.appendChild(el('td', 'proto-name', s.chain));
+      tr.appendChild(el('td', 'num', String(s.count)));
+      tr.appendChild(el('td', 'num', formatUsd(s.tvl)));
+      tr.appendChild(el('td', 'implied', formatUsd(s.implied)));
+      var hot = el('td');
+      if (s.best) {
+        hot.appendChild(link('#/protocol/' + encodeURIComponent(s.best.slug), null, s.best.name));
+        hot.appendChild(el('span', 'num ' + pctClass(s.best.change_7d), '  ' + formatPct(s.best.change_7d)));
+      } else {
+        hot.textContent = '—';
+      }
+      tr.appendChild(hot);
+      cbody.appendChild(tr);
+    });
+    ctable.appendChild(cbody);
+    app.appendChild(ctable);
+  }
+
   /* One protocol ------------------------------------------------------------- */
 
   function meterRow(name, note, fraction, valueText, amber) {
@@ -458,7 +555,9 @@
       '<p>Each plan is generated from the protocol’s own record: its category picks the playbook (supply and borrow for lending, ' +
       'liquidity for a DEX, stake for staking, crossings for a bridge), its first chain picks the funding route and fees, its TVL ' +
       'band picks the position size, its tokenless age picks the campaign’s length, and its chain count decides whether the plan ' +
-      'works a second chain. Every step states what it costs and how long it takes.</p>';
+      'works a second chain. Every step states what it costs and how long it takes. The wording varies from protocol to protocol — ' +
+      'the opening, the second action and the weekly rhythm are picked per protocol — so the plans do not read as one template ' +
+      'filled in hundreds of times, and a watchlist protocol, or one above $250M of TVL, carries an extra mid-campaign review step.</p>';
     var title = el('h2', null, 'Category multiples');
     box.appendChild(title);
     var table = el('table');
@@ -499,6 +598,10 @@
       renderMethod();
       return;
     }
+    if (route.path === '/movers') {
+      renderMovers();
+      return;
+    }
     var state = {
       q: route.params.get('q') || '',
       chain: route.params.get('chain') || '',
@@ -514,12 +617,10 @@
     return;
   }
 
-  var methodLink = link('#/method', 'back-link', 'How the ranking works →');
-  methodLink.style.display = 'block';
-  methodLink.style.maxWidth = '1180px';
-  methodLink.style.margin = '0 auto';
-  methodLink.style.padding = '10px 20px 0';
-  document.body.insertBefore(methodLink, app);
+  var topnav = el('div', 'topnav');
+  topnav.appendChild(link('#/movers', 'back-link', 'Top movers →'));
+  topnav.appendChild(link('#/method', 'back-link', 'How the ranking works →'));
+  document.body.insertBefore(topnav, app);
 
   window.addEventListener('hashchange', renderApp);
   document.addEventListener('keydown', function (ev) {

@@ -56,6 +56,10 @@ a:hover { text-decoration: underline; }
 /* Layout ---------------------------------------------------------------- */
 
 .app { max-width: 1180px; margin: 0 auto; padding: 20px; min-height: 55vh; }
+.topnav { max-width: 1180px; margin: 0 auto; padding: 10px 20px 0; display: flex; gap: 22px; }
+.view-title { font-size: 26px; margin: 8px 0 4px; }
+.chain-title { margin-top: 28px; }
+.mover-change { font-weight: 700; font-size: 15.5px; }
 .colophon { max-width: 1180px; margin: 0 auto; padding: 6px 20px 34px; color: var(--faint); font-size: 13px; }
 .colophon em { color: var(--muted); font-style: normal; }
 
