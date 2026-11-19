@@ -137,6 +137,7 @@ a:hover { text-decoration: underline; }
   vertical-align: 2px; font-weight: 700;
 }
 .implied { font-family: var(--mono); font-weight: 700; color: var(--accent); text-align: right; white-space: nowrap; }
+.flow { font-family: var(--mono); font-weight: 700; text-align: right; white-space: nowrap; }
 .up { color: var(--accent); }
 .down { color: var(--red); }
 .flat { color: var(--faint); }

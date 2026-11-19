@@ -353,9 +353,14 @@
     app.appendChild(resultsHost);
     updateResults(state);
     var shown = state.tab === 'live' ? DATA.live.length : DATA.rows.filter(function (r) { return rowMatches(r, state); }).length;
+    var filterNote = '';
+    if (state.tab === 'watchlist') filterNote += ' · watchlist only';
+    if (state.chain) filterNote += ' · running on ' + state.chain;
+    if (state.cat) filterNote += ' · in category ' + state.cat;
+    if (state.q) filterNote += ' · matching "' + state.q + '"';
     count.textContent = state.tab === 'live'
       ? 'Already trading — kept apart from the ranked board, at the market’s own values.'
-      : 'Showing ' + shown + ' of ' + DATA.rows.length + ' ranked protocols. Click a row for its value breakdown and farm plan.';
+      : 'Showing ' + shown + ' of ' + DATA.rows.length + ' ranked protocols' + filterNote + '. Click a row for its value breakdown and farm plan.';
   }
 
   /* Movers and chains --------------------------------------------------------- */
@@ -384,8 +389,8 @@
     tr.appendChild(el('td', 'chains chains-col', chainLabel(r.chains)));
     tr.appendChild(el('td', 'num', formatUsd(r.tvl_usd)));
     tr.appendChild(el('td', 'num mover-change ' + pctClass(r.change_7d), formatPct(r.change_7d)));
-    tr.appendChild(el('td', 'implied', (flow < 0 ? '−' : '+') + formatUsd(Math.abs(Math.round(flow)))));
-    tr.appendChild(el('td', 'num', formatUsd(r.implied_value_usd)));
+    tr.appendChild(el('td', 'flow ' + (flow > 0 ? 'up' : flow < 0 ? 'down' : 'flat'), (flow < 0 ? '−' : '+') + formatUsd(Math.abs(Math.round(flow)))));
+    tr.appendChild(el('td', 'num implied', formatUsd(r.implied_value_usd)));
     tr.appendChild(el('td', 'num', String(r.signal_score)));
     return tr;
   }
