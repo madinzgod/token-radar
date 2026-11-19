@@ -658,7 +658,7 @@ export interface DashboardData {
     tenure_full_days: number;
     reach_per_chain: number;
   };
-  counts: { scanned: number; ranked: number; watchlist: number; live: number; set_aside: number };
+  counts: { scanned: number; ranked: number; watchlist: number; watchlist_covered: number; live: number; set_aside: number };
   rows: BoardRow[];
   live: LiveRow[];
 }
@@ -754,6 +754,7 @@ export function buildRadar(snapshot: SnapshotData): { board: BoardRow[]; data: D
       scanned: snapshot.protocols.length,
       ranked: board.length,
       watchlist: snapshot.watchlist.length,
+      watchlist_covered: board.filter((r) => watch.has(r.slug)).length,
       live: snapshot.protocols.filter(recordsToken).length,
       set_aside: snapshot.protocols.filter((p) => !recordsToken(p)).length - board.length,
     },

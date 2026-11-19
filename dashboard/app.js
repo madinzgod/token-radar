@@ -115,7 +115,7 @@
     var totalImplied = DATA.rows.reduce(function (sum, r) { return sum + r.implied_value_usd; }, 0);
     wrap.appendChild(statCard(String(DATA.counts.scanned), 'protocols in the snapshot'));
     wrap.appendChild(statCard('<em>' + DATA.counts.ranked + '</em>', 'pre-token protocols ranked'));
-    wrap.appendChild(statCard(DATA.counts.watchlist + ' / ' + DATA.counts.watchlist, 'watchlist protocols covered'));
+    wrap.appendChild(statCard(DATA.counts.watchlist_covered + ' / ' + DATA.counts.watchlist, 'watchlist protocols covered'));
     wrap.appendChild(statCard(formatUsd(totalImplied), 'total implied launch value'));
     wrap.appendChild(statCard(String(DATA.counts.live), 'protocols already trading'));
     return wrap;
