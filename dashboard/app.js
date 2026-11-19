@@ -652,7 +652,7 @@
       '<p class="formula">implied value = TVL × category multiple × momentum × tokenless tenure × reach</p>' +
       '<h2>The four factors</h2>' +
       '<ul>' +
-      '<li><strong>Category multiple.</strong> What a launched token in the protocol’s category has typically been worth against the TVL behind it. A chain’s own token carries the richest multiple; a canonical bridge, which is infrastructure a chain runs, the thinnest.</li>' +
+      '<li><strong>Category multiple.</strong> What a launched token in the protocol’s category has typically been worth against the TVL behind it. A chain’s own token carries the richest multiple; a canonical bridge, which is infrastructure a chain runs, the thinnest. The multiples are one table applied uniformly to every protocol in a category, drawn from what launched tokens in that category have historically been worth against the TVL behind them — they attach to categories, never to a protocol by name.</li>' +
       '<li><strong>Momentum.</strong> The seven-day TVL change, clamped to −50%…+100% and weighted at 0.6, so a doubling week lifts value by 60% and a halving week cuts it by 30%. Unreported change counts as flat.</li>' +
       '<li><strong>Tokenless tenure.</strong> How long the protocol has run at scale with no token, from the day DefiLlama began tracking it to the snapshot’s day. The credit rises from ×0.75 to ×1.25 over four years: value and users accrue to a launch the longer it is waited for. An unreported date is assumed at eighteen months and flagged on the protocol’s page.</li>' +
       '<li><strong>Reach.</strong> Each chain past the first adds 4%, up to ten extra chains: a launch is worth more with distribution already built.</li>' +
