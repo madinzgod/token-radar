@@ -25,9 +25,13 @@ reader do to farm it before it happens?
   the full breakdown behind every rank.
 - **A farm plan per protocol, generated from its own record.** Its category picks the playbook,
   its first chain the funding route, its TVL band the position size, its tokenless age the
-  campaign length. Every step states what it costs and how long it takes.
+  campaign length, and a sharp seven-day move adds its own clause to the weekly step. Every step
+  states what it costs and how long it takes, and each protocol's page totals the plan into a
+  campaign line — the position, the fees all in, and the weeks it runs.
 - **A dashboard a reader can use.** A sortable, filterable board (chain, category, watchlist,
-  search), a signal strip for the hottest protocols, a detail view per protocol, the
+  search) with a concentration note, a signal strip for the hottest protocols, a detail view per
+  protocol with its board neighbours, a movers view that ranks seven-day TVL inflow in dollars
+  (with the biggest outflows for contrast, and per-chain and per-category summaries), the
   already-trading set kept apart, and a methodology page that states the model in full. Static
   files only: it renders with no network.
 
@@ -54,7 +58,8 @@ serve the output directory with any static file server and open `dashboard/index
 - `lib/model.ts` — the classification, the value model, the signal score, the farm-plan
   generator, and a self-check that refuses a board the gate would refuse.
 - `dashboard/` — the page: `index.html`, `app.css`, `app.js`. No framework, no network.
-- `screenshots/` — three renders of the dashboard, taken in a headless browser.
+- `screenshots/` — four renders of the dashboard, taken in a headless browser: the board, a
+  protocol's detail view, a filtered board, and the movers view.
 - `vendor/makefun-board.ts` — the kit's dossier library, byte for byte as shipped (not my code).
 
 ## License

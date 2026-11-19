@@ -380,8 +380,10 @@ interface Playbook {
   open: (name: string, capital: number, chain: string) => string;
   /** A second, different qualifying action on the same protocol. */
   deepen: (name: string, chain: string) => string;
-  /** An alternative second action; each protocol's plan takes one of the two, by its slug. */
+  /** An alternative second action; each protocol's plan takes one of the variants, by its slug. */
   deepen2: (name: string, chain: string) => string;
+  /** A third second action, for the playbooks the board leans on most. */
+  deepen3?: (name: string, chain: string) => string;
   /** How the position is unwound when the farm ends. */
   unwind: (name: string) => string;
 }
@@ -393,6 +395,7 @@ const PLAYBOOKS: { match: (category: string) => boolean; book: Playbook }[] = [
       open: (n, k, ch) => `Supply $${k} of USDC to ${n} on ${ch} so the wallet shows a live lending position, then borrow about a third of it back and re-supply the loan to build genuine two-sided activity`,
       deepen: (n, ch) => `Open a second, smaller supply position in a different ${n} market on ${ch} (a ETH or wrapped-BTC market, not only stablecoins), because multi-market use is what points programs usually count`,
       deepen2: (n, ch) => `Roll the borrow once on ${ch}: repay it in full, then borrow again against the same supply a week later, so the wallet shows a complete lending cycle rather than one static position`,
+      deepen3: (n, ch) => `Move part of the supply between two of ${n}'s markets once on ${ch} — withdraw from one and supply into another a few days later — so the wallet shows portfolio behaviour, not a parked deposit`,
       unwind: (n) => `Repay any open borrow first, then withdraw the supplied balance in one transaction; ${n} has no lock-up on supplied funds, so the exit settles the same day`,
     },
   },
@@ -402,6 +405,7 @@ const PLAYBOOKS: { match: (category: string) => boolean; book: Playbook }[] = [
       open: (n, k, ch) => `Provide $${k} split evenly between USDC and the chain's main asset in ${n}'s busiest pool on ${ch}, and keep the LP position open rather than hopping between pools`,
       deepen: (n, ch) => `Route your ordinary swaps on ${ch} through ${n} itself instead of a rival aggregator, a few trades a week, so the wallet also carries trader history and not only liquidity`,
       deepen2: (n, ch) => `Claim whatever fees or points the pool credits to the position and put them straight back into the same ${n} pool on ${ch}, so the position compounds instead of sitting idle`,
+      deepen3: (n, ch) => `Open a second, smaller LP position in a different ${n} pool on ${ch} — a different pair, not the same one twice — so the wallet farms the venue and not a single pool`,
       unwind: (n) => `Remove the liquidity in one visit and swap the proceeds back to USDC; watch the pool's exit fee on ${n} before you confirm, and leave nothing behind in old pool versions`,
     },
   },
@@ -411,6 +415,7 @@ const PLAYBOOKS: { match: (category: string) => boolean; book: Playbook }[] = [
       open: (n, k, ch) => `Stake $${k} of the chain's staking asset through ${n} on ${ch} and hold the liquid receipt token in the same wallet, unstaked and visible`,
       deepen: (n, ch) => `Put a small part of the receipt token to work in one ${n} partner market on ${ch} (a lending market or a liquidity pool), which is the behaviour restaking ecosystems reward most`,
       deepen2: (n, ch) => `Place a second, smaller stake with a different validator or vault inside ${n} on ${ch}, since a wallet staked in exactly one place is the first shape a sybil screen looks for`,
+      deepen3: (n, ch) => `Re-stake the rewards ${n} pays out once, in the same wallet, so the position grows from its own yield at least once during the campaign instead of only from deposits`,
       unwind: (n) => `Start the unstake early: staking exits on ${n} queue behind an unbonding window, so request the withdrawal at least two weeks before you need the funds back`,
     },
   },
@@ -438,6 +443,7 @@ const PLAYBOOKS: { match: (category: string) => boolean; book: Playbook }[] = [
       open: (n, k, ch) => `Deposit $${k} of USDC into the largest curated vault ${n} runs on ${ch} and keep the vault shares in the wallet that made the deposit`,
       deepen: (n, ch) => `Add a second deposit into a different ${n} vault with a different strategy, even a small one, so the wallet is a user of the platform and not of one vault only`,
       deepen2: (n, ch) => `When ${n} opens a new vault on ${ch}, move a small slice of the first deposit into it in its first week; early depositors in a fresh vault are the cohort a curator can identify`,
+      deepen3: (n, ch) => `Shift a small slice from the first vault into a second ${n} vault mid-campaign and leave it there; a curator reads vault-to-vault movement as an allocator at work, not a parked balance`,
       unwind: (n) => `Redeem the vault shares from ${n} in one visit; most vaults settle at once, but check the vault's own withdrawal window before you plan around the funds`,
     },
   },
@@ -482,17 +488,43 @@ function slugHash(slug: string): number {
   return h;
 }
 
+/** What one protocol's farm campaign costs, totalled from the plan's own figures. */
+export interface FarmSummary {
+  /** The position the plan opens, in dollars. */
+  position_usd: number;
+  /** Every fee the plan names, added up: setup gas, each visit's fee, the weekly work, the claim. */
+  fees_usd: number;
+  /** Position plus fees: what the campaign ties up, all in. */
+  all_in_usd: number;
+  /** How many weeks the campaign runs. */
+  weeks: number;
+  /** The weekly visit's length, in minutes. */
+  minutes_per_week: number;
+}
+
+/** A seven-day change as the plans quote it: a sign and one decimal. */
+function pctText(change: number): string {
+  return `${change > 0 ? '+' : ''}${Math.round(change * 10) / 10}%`;
+}
+
 /**
  * One protocol's farm plan: seven steps, or eight for a watchlist protocol or a large one, each a
- * single string carrying the action, what it costs and how long it takes. Every figure in it comes
- * from the protocol's own record: its category picks the playbook, its first chain picks the
- * funding route, its TVL band picks the capital, its tokenless age picks the campaign's length,
- * and its chain count decides whether the plan works a second chain. The wording is varied on
- * purpose — three openings for the wallet step, two second actions per playbook, two forms each
- * for the weekly work and the record keeping — chosen by a stable hash of the protocol's slug, so
- * no two plans read alike yet the same snapshot always writes the same plan.
+ * single string carrying the action, what it costs and how long it takes, plus the campaign's
+ * totals. Every figure in it comes from the protocol's own record: its category picks the
+ * playbook, its first chain picks the funding route, its TVL band picks the capital, its
+ * tokenless age picks the campaign's length, its chain count decides whether the plan works a
+ * second chain, and its seven-day change adds a clause to the weekly step when the move is sharp
+ * either way. The wording is varied on purpose — three openings for the wallet step, up to three
+ * second actions per playbook, two forms each for the second deposit, the weekly work, the record
+ * keeping and three for the mid-campaign review — chosen by a stable hash of the protocol's slug,
+ * so no two plans read alike yet the same snapshot always writes the same plan. The summary is
+ * totalled from the same figures the steps quote, so the plan and its price can never disagree.
  */
-export function farmPlanFor(p: ProtocolRecord, ageDays: number | null, onWatchlist = false): string[] {
+export function farmPlanFor(
+  p: ProtocolRecord,
+  ageDays: number | null,
+  onWatchlist = false,
+): { steps: string[]; summary: FarmSummary } {
   const chain = homeChain(p);
   const gas = GAS_ASSET[chain] ?? 'the chain gas token';
   const fee = feeFor(chain);
@@ -507,34 +539,59 @@ export function farmPlanFor(p: ProtocolRecord, ageDays: number | null, onWatchli
     `Create a dedicated wallet for ${p.name}, never your main one, back its seed phrase up on paper, and send about $${gasBudget} of ${gas} to it on ${chain} so every later step can pay its own gas. Budget about $${gasBudget} once; takes 10 minutes.`,
     `Start from a clean wallet used only for ${p.name}: generate it in an app you trust, store the recovery phrase offline, and load it with roughly $${gasBudget} of ${gas} on ${chain} for fees. Budget about $${gasBudget} once; takes 10 minutes.`,
   ];
-  const deepen = v % 2 === 0 ? book.deepen : book.deepen2;
+  const deepenVariants = book.deepen3 ? [book.deepen, book.deepen2, book.deepen3] : [book.deepen, book.deepen2];
+  const deepen = deepenVariants[v % deepenVariants.length]!;
   const weeklyForms = [
     `Work the position once a week for ${weeks} weeks: one deposit, borrow, swap or claim each visit, never a burst in a single day. Budget about $${fee} a week in fees; takes 10 minutes a week.`,
     `Come back once a week for ${weeks} weeks and do one real thing each visit — a small top-up, a claim, a rebalance — spaced out, because a steady history reads as a user and a single-day burst reads as a script. Budget about $${fee} a week in fees; takes 10 minutes a week.`,
   ];
+  let weekly = weeklyForms[Math.floor(v / 2) % 2]!;
+  if (p.change_7d !== null && p.change_7d >= 10) {
+    weekly += ` Its TVL is up ${pctText(p.change_7d)} in the last seven days; hold the weekly size steady rather than chasing the move.`;
+  } else if (p.change_7d !== null && p.change_7d <= -10) {
+    weekly += ` Its TVL is down ${pctText(p.change_7d)} in the last seven days; halve the weekly amount until the slide steadies.`;
+  }
   const logForms = [
     `Keep a farm log (wallet, dates, amounts, transaction hashes) and check ${p.name}'s own points or rewards page once a month from the link its app publishes. Budget nothing; never pay anyone to claim for you. Takes 5 minutes a month.`,
     `Write down each visit as it happens (date, action, amount, hash) and re-check ${p.name}'s official channels once a month for a points program or a launch announcement. Budget nothing; never pay anyone to claim for you. Takes 5 minutes a month.`,
   ];
+  const topUps = [
+    `Deepen the ${chain} position once: add about $${Math.floor(capital / 2)} more after the first week, which reads as conviction rather than a one-off test deposit. Budget about $${fee} in fees; takes 10 minutes.`,
+    `After the first week, add a second deposit of about $${Math.floor(capital / 2)} to the same ${chain} position — two deposits a week apart read as a user settling in, not a test. Budget about $${fee} in fees; takes 10 minutes.`,
+  ];
+  const step4Fee = secondChain !== null ? feeFor(secondChain) : fee;
   const steps: string[] = [
     setups[v % 3]!,
     `${book.open(p.name, capital, chain)}. Budget the $${capital} position plus about $${fee} in fees; takes 20 minutes.`,
     `${deepen(p.name, chain)}. Budget about $${fee} in fees; takes 15 minutes.`,
     secondChain !== null
-      ? `Repeat a small $${Math.max(25, Math.floor(capital / 3))} version of the same position on ${secondChain}, ${p.name}'s second chain, so the farm is not a one-chain footprint. Budget about $${feeFor(secondChain)} in fees; takes 15 minutes.`
-      : `Deepen the ${chain} position once: add about $${Math.floor(capital / 2)} more after the first week, which reads as conviction rather than a one-off test deposit. Budget about $${fee} in fees; takes 10 minutes.`,
-    weeklyForms[Math.floor(v / 2) % 2]!,
+      ? `Repeat a small $${Math.max(25, Math.floor(capital / 3))} version of the same position on ${secondChain}, ${p.name}'s second chain, so the farm is not a one-chain footprint. Budget about $${step4Fee} in fees; takes 15 minutes.`
+      : topUps[Math.floor(v / 24) % 2]!,
+    weekly,
     logForms[Math.floor(v / 6) % 2]!,
   ];
   if (onWatchlist || p.tvl_usd >= 250_000_000) {
-    steps.push(
+    const reviews = [
       `Halfway through the ${weeks} weeks, review the position against ${p.name}'s own numbers: if its TVL has fallen by a third or more since the campaign began, stop adding funds and let the weekly visits wind down. Budget nothing; takes 10 minutes once.`,
-    );
+      `At the halfway mark of the ${weeks} weeks, re-read ${p.name}'s numbers as they then stand — TVL, chain count, and any points page it has added since you started. If the position no longer matches the plan you began with, cut the weekly size in half rather than quitting outright. Budget nothing; takes 10 minutes once.`,
+      `Once, at the middle of the ${weeks} weeks, compare ${p.name} with the protocols ranked either side of it on this board: if a neighbour has clearly outgrown it on TVL and momentum, split the remaining weeks between the two instead of doubling down on one. Budget nothing; takes 15 minutes once.`,
+    ];
+    steps.push(reviews[Math.floor(v / 12) % 3]!);
   }
   steps.push(
     `${book.unwind(p.name)}. If a launch is announced, claim only from the link on ${p.name}'s official page and expect the claim itself to cost about $${fee} in fees. Takes 15 minutes.`,
   );
-  return steps.map(fitStep);
+  const fees = Math.round(gasBudget + fee + fee + step4Fee + fee * weeks + fee);
+  return {
+    steps: steps.map(fitStep),
+    summary: {
+      position_usd: capital,
+      fees_usd: fees,
+      all_in_usd: capital + fees,
+      weeks,
+      minutes_per_week: 10,
+    },
+  };
 }
 
 /** A step trimmed or padded into the gate's 20..600 character band, deterministically. */
@@ -569,6 +626,7 @@ export interface BoardRow {
   signal_score: number;
   breakdown: ValueBreakdown;
   farm_steps: string[];
+  farm_summary: FarmSummary;
 }
 
 /** A protocol whose token already trades: shown apart, at the market's own value. */
@@ -640,22 +698,26 @@ export function buildRadar(snapshot: SnapshotData): { board: BoardRow[]; data: D
     (a, b) => b.implied - a.implied || (a.p.slug < b.p.slug ? -1 : a.p.slug > b.p.slug ? 1 : 0),
   );
 
-  const board: BoardRow[] = withSignal.map((s, i) => ({
-    rank: i + 1,
-    slug: s.p.slug,
-    name: s.p.name,
-    category: s.p.category,
-    chains: s.p.chains,
-    tvl_usd: s.p.tvl_usd,
-    change_7d: s.p.change_7d,
-    listed_at: s.p.listed_at,
-    age_days: s.breakdown.age_days,
-    on_watchlist: watch.has(s.p.slug),
-    implied_value_usd: s.implied,
-    signal_score: s.signal,
-    breakdown: s.breakdown,
-    farm_steps: farmPlanFor(s.p, s.breakdown.age_days, watch.has(s.p.slug)),
-  }));
+  const board: BoardRow[] = withSignal.map((s, i) => {
+    const plan = farmPlanFor(s.p, s.breakdown.age_days, watch.has(s.p.slug));
+    return {
+      rank: i + 1,
+      slug: s.p.slug,
+      name: s.p.name,
+      category: s.p.category,
+      chains: s.p.chains,
+      tvl_usd: s.p.tvl_usd,
+      change_7d: s.p.change_7d,
+      listed_at: s.p.listed_at,
+      age_days: s.breakdown.age_days,
+      on_watchlist: watch.has(s.p.slug),
+      implied_value_usd: s.implied,
+      signal_score: s.signal,
+      breakdown: s.breakdown,
+      farm_steps: plan.steps,
+      farm_summary: plan.summary,
+    };
+  });
 
   const live: LiveRow[] = snapshot.protocols
     .filter((p) => recordsToken(p) && !isExchange(p))

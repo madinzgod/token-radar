@@ -112,6 +112,8 @@ a:hover { text-decoration: underline; }
 }
 .tab[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: #06130b; font-weight: 700; }
 .result-count { color: var(--faint); font-family: var(--mono); font-size: 12.5px; }
+.board-note { color: var(--muted); font-size: 13.5px; margin: 0 0 16px; max-width: 92ch; }
+.board-note::first-letter { color: var(--accent); }
 
 /* Board table ----------------------------------------------------------- */
 
@@ -150,6 +152,8 @@ a:hover { text-decoration: underline; }
 .detail-head h1 { font-size: 30px; margin: 0; }
 .detail-rank { font-family: var(--mono); color: var(--accent); font-size: 17px; }
 .detail-sub { color: var(--muted); margin: 0 0 16px; }
+.neighbor-line { color: var(--muted); font-size: 13.5px; margin: -8px 0 16px; }
+.neighbor-line a { font-weight: 600; }
 .detail-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 10px; margin-bottom: 18px; }
 .implied-hero {
   background: var(--panel); border: 1px solid var(--accent-dim); border-radius: 10px;
@@ -166,6 +170,11 @@ a:hover { text-decoration: underline; }
 .meter i { display: block; height: 100%; background: var(--accent); }
 .meter.amber i { background: var(--amber); }
 .farm-plan { background: var(--panel); border: 1px solid var(--line-soft); border-radius: 10px; padding: 6px 18px 10px; margin-bottom: 18px; }
+.plan-summary {
+  border: 1px solid var(--line); border-left: 3px solid var(--accent); border-radius: 7px;
+  background: var(--bg); padding: 9px 12px; margin: 4px 0 6px; color: var(--muted); font-size: 13.5px;
+}
+.plan-summary strong { color: var(--ink); font-family: var(--mono); font-weight: 700; font-size: 13px; }
 .farm-plan ol { margin: 8px 0; padding-left: 22px; }
 .farm-plan li { padding: 7px 0; border-bottom: 1px dashed var(--line-soft); }
 .farm-plan li:last-child { border-bottom: none; }
